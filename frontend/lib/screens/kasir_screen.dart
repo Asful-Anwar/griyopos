@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/produk.dart';
 import '../services/api_services.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'midtrans_page.dart';
+
 
 class KasirScreen extends StatefulWidget {
   @override
@@ -35,6 +39,33 @@ class _KasirScreenState extends State<KasirScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal transaksi')),
+      );
+    }
+  }
+
+  void bayarDenganMidtrans() async {
+    final orderId = DateTime.now().millisecondsSinceEpoch.toString();
+
+    final response = await http.post(
+      Uri.parse('${ApiService.baseUrl}/bayar'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'order_id': orderId,
+        'total': getTotalHarga(),
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final snapToken = json.decode(response.body)['token'];
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MidtransPage(snapToken: snapToken),
+        ),
+      );
+    }else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal memuat Midtrans'))
       );
     }
   }
@@ -155,12 +186,12 @@ class _KasirScreenState extends State<KasirScreen> {
                   ),
                   SizedBox(height: 16),
                   ElevatedButton.icon(
-                    onPressed: keranjang.isEmpty ? null : checkout,
-                    icon: Icon(Icons.payment),
-                    label: Text('Checkout'),
+                    onPressed: keranjang.isEmpty ? null : bayarDenganMidtrans,
+                    icon: Icon(Icons.credit_card),
+                    label: Text('Bayar Online'),
                     style: ElevatedButton.styleFrom(
                       minimumSize: Size(double.infinity, 50),
-                      backgroundColor: Colors.green,
+                      backgroundColor: Colors.orange,
                     ),
                   )
                 ],
