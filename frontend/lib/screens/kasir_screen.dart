@@ -19,12 +19,24 @@ class _KasirScreenState extends State<KasirScreen> {
 
   void tambahKeKeranjang(Produk produk) {
     setState(() {
-      if (keranjang.containsKey(produk)) {
-        keranjang[produk] = keranjang[produk]! + 1;
-      } else {
-        keranjang[produk] = 1;
-      }
+      keranjang.update(produk, (jumlah) => jumlah + 1, ifAbsent: () => 1);
     });
+  }
+
+  void checkout() async {
+    final sukses = await ApiService.kirimTransaksi(getTotalHarga(), keranjang);
+    if (sukses) {
+      setState(() {
+        keranjang.clear();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Transaksi berhasil')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal transaksi')),
+      );
+    }
   }
 
   int getTotalHarga() {
@@ -38,74 +50,124 @@ class _KasirScreenState extends State<KasirScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Kasir Griyo POS')),
-      body: FutureBuilder<List<Produk>>(
-        future: futureProduk,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            final produkList = snapshot.data!;
-            return GridView.builder(
-              padding: EdgeInsets.all(10),
-              itemCount: produkList.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 1.3,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
+      body: Row(
+        children: [
+          // Sidebar
+          NavigationRail(
+            selectedIndex: 0,
+            onDestinationSelected: (index) {},
+            labelType: NavigationRailLabelType.all,
+            destinations: const [
+              NavigationRailDestination(
+                icon: Icon(Icons.point_of_sale),
+                label: Text('Kasir'),
               ),
-              itemBuilder: (context, index) {
-                final produk = produkList[index];
-                return GestureDetector(
-                  onTap: () => tambahKeKeranjang(produk),
-                  child: Card(
-                    elevation: 3,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          produk.nama,
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        Text("Rp ${produk.harga}"),
-                        Text("Stok: ${produk.stok}"),
-                      ],
+              NavigationRailDestination(
+                icon: Icon(Icons.inventory),
+                label: Text('Produk'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.receipt_long),
+                label: Text('Transaksi'),
+              ),
+            ],
+          ),
+
+          // Grid Produk
+          Expanded(
+            flex: 3,
+            child: FutureBuilder<List<Produk>>(
+              future: futureProduk,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  final produkList = snapshot.data!;
+                  return GridView.builder(
+                    padding: EdgeInsets.all(16),
+                    itemCount: produkList.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      childAspectRatio: 1.2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
                     ),
-                  ),
-                );
-              },
-            );
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Gagal memuat produk'));
-          } else {
-            return Center(child: CircularProgressIndicator());
-          }
-        },
-      ),
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.all(16),
-        color: Colors.blue.shade50,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Total: Rp ${getTotalHarga()}',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            ElevatedButton(
-              onPressed: keranjang.isEmpty
-                  ? null
-                  : () {
-                      // Di tahap 3.3 akan kita buat fungsi checkout
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Checkout belum diimplementasi'),
+                    itemBuilder: (context, index) {
+                      final produk = produkList[index];
+                      return GestureDetector(
+                        onTap: () => tambahKeKeranjang(produk),
+                        child: Card(
+                          color: Colors.white,
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          child: Padding(
+                            padding: EdgeInsets.all(12),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.fastfood, size: 40, color: Colors.blue),
+                                SizedBox(height: 8),
+                                Text(produk.nama, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                Text("Rp ${produk.harga}"),
+                                Text("Stok: ${produk.stok}"),
+                              ],
+                            ),
+                          ),
                         ),
                       );
                     },
-              child: Text("Checkout"),
+                  );
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Gagal memuat produk'));
+                } else {
+                  return Center(child: CircularProgressIndicator());
+                }
+              },
             ),
-          ],
-        ),
+          ),
+
+          // Keranjang
+          Expanded(
+            flex: 2,
+            child: Container(
+              color: Colors.grey.shade100,
+              padding: EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Text('Keranjang', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  Divider(),
+                  Expanded(
+                    child: ListView(
+                      children: keranjang.entries.map((entry) {
+                        return ListTile(
+                          title: Text(entry.key.nama),
+                          subtitle: Text('x${entry.value}'),
+                          trailing: Text("Rp ${entry.key.harga * entry.value}"),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Total:', style: TextStyle(fontSize: 18)),
+                      Text("Rp ${getTotalHarga()}", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: keranjang.isEmpty ? null : checkout,
+                    icon: Icon(Icons.payment),
+                    label: Text('Checkout'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: Size(double.infinity, 50),
+                      backgroundColor: Colors.green,
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
