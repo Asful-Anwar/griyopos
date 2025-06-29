@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const produkRoutes = require("./routes/produkRoute");
 const transaksiRoutes = require("./routes/transaksiRoute");
 const bayarRoutes = require("./routes/bayarRoutes");
+const authRoutes = require('./routes/authRoutes');
 
 require('dotenv').config();
 const app = express();
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use("/produk", produkRoutes);
 app.use("/transaksi", transaksiRoutes);
 app.use("/bayar", bayarRoutes);
+app.use("/auth", authRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

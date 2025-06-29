@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/login_screen.dart';
 import 'screens/kasir_screen.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: LoginScreen(),
+  ));
 }
 
 class MyApp extends StatelessWidget {
