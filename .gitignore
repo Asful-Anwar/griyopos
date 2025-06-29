@@ -1,0 +1,14 @@
+# Ignore environment files
+backend/.env
+
+# Node.js dependencies
+backend/node_modules/
+
+# Flutter build files
+frontend/build/
+frontend/.dart_tool/
+frontend/.packages
+
+# Mac/Windows system files
+.DS_Store
+Thumbs.db
