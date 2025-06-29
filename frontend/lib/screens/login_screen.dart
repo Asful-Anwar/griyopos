@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'kasir_screen.dart';
 import 'admin_screen.dart';
+import 'package:frontend/screens/admin_produk_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -35,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
         print("Login sebagai admin");
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => AdminScreen()),
+          MaterialPageRoute(builder: (_) => AdminProdukScreen()),
         );
 
         //TODO:arahkan ke halaman admin
