@@ -13,6 +13,12 @@ class _AdminProdukScreenState extends State<AdminProdukScreen> {
   final hargaCtrl = TextEditingController();
   int? editingId;
 
+  @override
+  void initState() {
+    super.initState();
+    fetchProduk();
+  }
+
   Future<void> fetchProduk() async {
     final res = await http.get(Uri.parse('http://localhost:5000/produk'));
     if (res.statusCode == 200) {
@@ -21,10 +27,21 @@ class _AdminProdukScreenState extends State<AdminProdukScreen> {
   }
 
   Future<void> simpanProduk() async {
-    final body = json.encode({
-      "nama": namaCtrl.text,
-      "harga": int.parse(hargaCtrl.text)
-    });
+    final nama = namaCtrl.text.trim();
+    final hargaText = hargaCtrl.text.trim();
+
+    if (nama.isEmpty || hargaText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Nama dan Harga wajib diisi")));
+      return;
+    }
+
+    int? harga = int.tryParse(hargaText);
+    if (harga == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Harga harus berupa angka")));
+      return;
+    }
+
+    final body = json.encode({"nama": nama, "harga": harga});
 
     final url = editingId == null
         ? 'http://localhost:5000/produk'
@@ -44,13 +61,9 @@ class _AdminProdukScreenState extends State<AdminProdukScreen> {
 
   Future<void> hapusProduk(int id) async {
     final res = await http.delete(Uri.parse('http://localhost:5000/produk/$id'));
-    if (res.statusCode == 200) fetchProduk();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    fetchProduk();
+    if (res.statusCode == 200) {
+      fetchProduk();
+    }
   }
 
   @override
@@ -61,8 +74,15 @@ class _AdminProdukScreenState extends State<AdminProdukScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            TextField(controller: namaCtrl, decoration: InputDecoration(labelText: "Nama Produk")),
-            TextField(controller: hargaCtrl, decoration: InputDecoration(labelText: "Harga"), keyboardType: TextInputType.number),
+            TextField(
+              controller: namaCtrl,
+              decoration: InputDecoration(labelText: "Nama Produk"),
+            ),
+            TextField(
+              controller: hargaCtrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: "Harga"),
+            ),
             SizedBox(height: 10),
             ElevatedButton(
               onPressed: simpanProduk,
