@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/produk.dart';
-import '../services/api_services.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'midtrans_page.dart';
-
+import '../services/produk_service.dart';
 
 class KasirScreen extends StatefulWidget {
   @override
@@ -18,56 +14,13 @@ class _KasirScreenState extends State<KasirScreen> {
   @override
   void initState() {
     super.initState();
-    futureProduk = ApiService.fetchProduk();
+    futureProduk = ProdukService.fetchProduk();
   }
 
   void tambahKeKeranjang(Produk produk) {
     setState(() {
       keranjang.update(produk, (jumlah) => jumlah + 1, ifAbsent: () => 1);
     });
-  }
-
-  void checkout() async {
-    final sukses = await ApiService.kirimTransaksi(getTotalHarga(), keranjang);
-    if (sukses) {
-      setState(() {
-        keranjang.clear();
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Transaksi berhasil')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal transaksi')),
-      );
-    }
-  }
-
-  void bayarDenganMidtrans() async {
-    final orderId = DateTime.now().millisecondsSinceEpoch.toString();
-
-    final response = await http.post(
-      Uri.parse('${ApiService.baseUrl}/bayar'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'order_id': orderId,
-        'total': getTotalHarga(),
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final snapToken = json.decode(response.body)['token'];
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MidtransPage(snapToken: snapToken),
-        ),
-      );
-    }else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal memuat Midtrans'))
-      );
-    }
   }
 
   int getTotalHarga() {
@@ -86,7 +39,9 @@ class _KasirScreenState extends State<KasirScreen> {
           // Sidebar
           NavigationRail(
             selectedIndex: 0,
-            onDestinationSelected: (index) {},
+            onDestinationSelected: (index) {
+              // handle navigasi nanti
+            },
             labelType: NavigationRailLabelType.all,
             destinations: const [
               NavigationRailDestination(
@@ -104,7 +59,7 @@ class _KasirScreenState extends State<KasirScreen> {
             ],
           ),
 
-          // Grid Produk
+          // Daftar Produk
           Expanded(
             flex: 3,
             child: FutureBuilder<List<Produk>>(
@@ -138,7 +93,6 @@ class _KasirScreenState extends State<KasirScreen> {
                                 SizedBox(height: 8),
                                 Text(produk.nama, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                                 Text("Rp ${produk.harga}"),
-                                // Text("Stok: ${produk.stok}"),
                               ],
                             ),
                           ),
@@ -186,12 +140,12 @@ class _KasirScreenState extends State<KasirScreen> {
                   ),
                   SizedBox(height: 16),
                   ElevatedButton.icon(
-                    onPressed: keranjang.isEmpty ? null : bayarDenganMidtrans,
-                    icon: Icon(Icons.credit_card),
-                    label: Text('Bayar Online'),
+                    onPressed: keranjang.isEmpty ? null : () {},
+                    icon: Icon(Icons.payment),
+                    label: Text('Bayar'),
                     style: ElevatedButton.styleFrom(
                       minimumSize: Size(double.infinity, 50),
-                      backgroundColor: Colors.orange,
+                      backgroundColor: Colors.green,
                     ),
                   )
                 ],

@@ -13,16 +13,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Griyo POS Clone',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: DaftarProdukPage(),
       debugShowCheckedModeBanner: false,
-      initialRoute: '/login',
-      routes: {
-        '/login': (context) =>  LoginScreen(),
-        '/kasir': (context) =>  KasirScreen(),
-        '/produk': (context) =>  DaftarProdukPage(),
-      },
+      title: 'Griyo POS',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: LoginScreen(), // Ganti dengan LoginScreen() jika ingin mulai dari login
     );
   }
 }
