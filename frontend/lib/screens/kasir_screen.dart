@@ -138,7 +138,7 @@ class _KasirScreenState extends State<KasirScreen> {
                                 SizedBox(height: 8),
                                 Text(produk.nama, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                                 Text("Rp ${produk.harga}"),
-                                Text("Stok: ${produk.stok}"),
+                                // Text("Stok: ${produk.stok}"),
                               ],
                             ),
                           ),

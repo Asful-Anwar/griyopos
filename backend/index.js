@@ -3,10 +3,11 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const produkRoutes = require("./routes/produkRoute");
 const transaksiRoutes = require("./routes/transaksiRoute");
-const bayarRoutes = require("./routes/bayarRoutes");
+const bayarRoute = require("./routes/bayarRoutes");
 const authRoutes = require('./routes/authRoutes');
 
 require('dotenv').config();
+// console.log("🔍 ENV CHECK:", process.env.MIDTRANS_SERVER_KEY);
 const app = express();
 
 app.use(cors());
@@ -14,7 +15,7 @@ app.use(express.json());
 
 app.use("/produk", produkRoutes);
 app.use("/transaksi", transaksiRoutes);
-app.use("/bayar", bayarRoutes);
+app.use("/bayar", bayarRoute);
 app.use("/auth", authRoutes);
 
 const PORT = process.env.PORT || 5000;

@@ -1,8 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const { getAllProduk } = require("../controllers/produkController");
+const db = require("../models/db");
 
-router.get("/", getAllProduk);
+router.get("/", (req, res) => {
+  db.query("SELECT id, nama, harga, stok FROM produk", (err, result) => {
+    if (err) return res.status(500).json(err);
+    res.json(result);
+  });
+});
+
 
 // Tambah produk
 router.post("/", (req, res) => {

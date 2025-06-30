@@ -51,6 +51,9 @@ class _AdminProdukScreenState extends State<AdminProdukScreen> {
         ? await http.post(Uri.parse(url), headers: {'Content-Type': 'application/json'}, body: body)
         : await http.put(Uri.parse(url), headers: {'Content-Type': 'application/json'}, body: body);
 
+        print("STATUS CODE: ${res.statusCode}");
+        print("RESPONSE BODY: ${res.body}");
+
     if (res.statusCode == 200 || res.statusCode == 201) {
       namaCtrl.clear();
       hargaCtrl.clear();

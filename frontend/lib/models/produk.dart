@@ -1,14 +1,15 @@
+// lib/models/produk.dart
 class Produk {
   final int id;
   final String nama;
   final int harga;
-  final int stok;
+  final int laba;
 
   Produk({
     required this.id,
     required this.nama,
     required this.harga,
-    required this.stok,
+    required this.laba,
   });
 
   factory Produk.fromJson(Map<String, dynamic> json) {
@@ -16,7 +17,7 @@ class Produk {
       id: json['id'],
       nama: json['nama'],
       harga: json['harga'],
-      stok: json['stok'],
+      laba: json['laba'],
     );
   }
 }
