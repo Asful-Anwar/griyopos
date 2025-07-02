@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../models/produk.dart';
 import '../services/produk_service.dart';
+import 'midtrans_page.dart';
 
 class KasirScreen extends StatefulWidget {
   @override
@@ -31,6 +34,40 @@ class _KasirScreenState extends State<KasirScreen> {
     return total;
   }
 
+  void bayarDenganMidtrans() async {
+    final total = getTotalHarga();
+    final orderId = DateTime.now().millisecondsSinceEpoch.toString();
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://192.168.100.228:5000/bayar'), // Ganti jika IP server beda
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'order_id': orderId,
+          'total': total,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final snapToken = jsonDecode(response.body)['token'];
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MidtransPage(snapToken: snapToken),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memproses pembayaran')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Terjadi kesalahan: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,9 +76,7 @@ class _KasirScreenState extends State<KasirScreen> {
           // Sidebar
           NavigationRail(
             selectedIndex: 0,
-            onDestinationSelected: (index) {
-              // handle navigasi nanti
-            },
+            onDestinationSelected: (index) {},
             labelType: NavigationRailLabelType.all,
             destinations: const [
               NavigationRailDestination(
@@ -83,7 +118,9 @@ class _KasirScreenState extends State<KasirScreen> {
                         child: Card(
                           color: Colors.white,
                           elevation: 4,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                           child: Padding(
                             padding: EdgeInsets.all(12),
                             child: Column(
@@ -91,7 +128,8 @@ class _KasirScreenState extends State<KasirScreen> {
                               children: [
                                 Icon(Icons.fastfood, size: 40, color: Colors.blue),
                                 SizedBox(height: 8),
-                                Text(produk.nama, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                Text(produk.nama,
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                                 Text("Rp ${produk.harga}"),
                               ],
                             ),
@@ -117,7 +155,8 @@ class _KasirScreenState extends State<KasirScreen> {
               padding: EdgeInsets.all(16),
               child: Column(
                 children: [
-                  Text('Keranjang', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text('Keranjang',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   Divider(),
                   Expanded(
                     child: ListView(
@@ -135,12 +174,13 @@ class _KasirScreenState extends State<KasirScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Total:', style: TextStyle(fontSize: 18)),
-                      Text("Rp ${getTotalHarga()}", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text("Rp ${getTotalHarga()}",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     ],
                   ),
                   SizedBox(height: 16),
                   ElevatedButton.icon(
-                    onPressed: keranjang.isEmpty ? null : () {},
+                    onPressed: keranjang.isEmpty ? null : bayarDenganMidtrans,
                     icon: Icon(Icons.payment),
                     label: Text('Bayar'),
                     style: ElevatedButton.styleFrom(

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MidtransPage extends StatelessWidget {
   final String snapToken;
@@ -8,15 +8,41 @@ class MidtransPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final snapUrl = "https://app.sandbox.midtrans.com/snap/v2/vtweb/$snapToken";
+    final snapUrl = 'https://app.sandbox.midtrans.com/snap/v2/vtweb/$snapToken';
 
-    final controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadRequest(Uri.parse(snapUrl));
+    // Fungsi untuk meluncurkan URL
+    Future<void> _launchPayment() async {
+      final uri = Uri.parse(snapUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        Navigator.pop(context); // kembali ke halaman sebelumnya setelah dibuka
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal membuka halaman Midtrans')),
+        );
+      }
+    }
+
+    // Jalankan saat build pertama
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _launchPayment();
+    });
 
     return Scaffold(
-      appBar: AppBar(title: Text("Midtrans")),
-      body: WebViewWidget(controller: controller),
+      appBar: AppBar(
+        title: Text("Memproses Pembayaran..."),
+        backgroundColor: Colors.orange,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Mengalihkan ke Midtrans...', style: TextStyle(fontSize: 16)),
+          ],
+        ),
+      ),
     );
   }
 }
