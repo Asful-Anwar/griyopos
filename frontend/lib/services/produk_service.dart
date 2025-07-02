@@ -15,4 +15,40 @@ class ProdukService {
       throw Exception('Gagal memuat data produk');
     }
   }
+
+  static Future<bool> tambahProduk(String nama, int harga, int stok) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/produk'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'nama': nama,
+        'harga': harga,
+        'stok': stok,
+      }),
+    );
+
+    return response.statusCode == 200;
+  }
+
+  static Future<bool> editProduk(int id, String nama, int harga, int stok) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/produk/$id'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'nama': nama,
+        'harga': harga,
+        'stok': stok,
+      }),
+    );
+
+    return response.statusCode == 200;
+  }
+
+  static Future<bool> hapusProduk(int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/produk/$id'),
+    );
+
+    return response.statusCode == 200;
+  }
 }
