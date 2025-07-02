@@ -3,26 +3,24 @@ const router = express.Router();
 const db = require("../models/db");
 
 router.post("/", (req, res) => {
-  const { total, items } = req.body;
+  const { order_id, total, items } = req.body;
 
-  if (!items || items.length === 0) {
-    return res.status(400).json({ message: "Keranjang kosong" });
+  if (!order_id || !total || !items || items.length === 0) {
+    return res.status(400).json({ error: 'Data tidak lengkap' });
   }
 
-  const sqlInsert = "INSERT INTO transaksi (total, created_at) VALUES (?, NOW())";
+  // Simpan transaksi utama
+  const sqlTransaksi = "INSERT INTO transaksi (id, total, created_at) VALUES (?, ?, NOW())";
+  db.query(sqlTransaksi, [order_id, total], (err, result) => {
+    if (err) return res.status(500).json({ error: 'Gagal menyimpan transaksi', detail: err });
 
-  db.query(sqlInsert, [total], (err, result) => {
-    if (err) return res.status(500).json(err);
+    // Siapkan data detail transaksi
+    const detailSql = "INSERT INTO transaksi_detail (transaksi_id, produk_id, jumlah, subtotal) VALUES ?";
+    const detailValues = items.map(item => [order_id, item.id, item.jumlah, item.harga * item.jumlah]);
 
-    const transaksiId = result.insertId;
-
-    const detailInsert = "INSERT INTO transaksi_detail (transaksi_id, produk_id, jumlah) VALUES ?";
-    const values = items.map(item => [transaksiId, item.id, item.jumlah]);
-
-    db.query(detailInsert, [values], (err2) => {
-      if (err2) return res.status(500).json(err2);
-
-      res.json({ message: "Transaksi berhasil", transaksi_id: transaksiId });
+    db.query(detailSql, [detailValues], (err2) => {
+      if (err2) return res.status(500).json({ error: 'Gagal menyimpan detail', detail: err2 });
+      res.json({ message: 'Transaksi berhasil disimpan' });
     });
   });
 });
@@ -30,7 +28,7 @@ router.post("/", (req, res) => {
 router.get("/", (req, res) => {
   const sql = `
     SELECT t.id AS transaksi_id, t.total, t.created_at,
-           p.nama, p.harga, td.jumlah
+           p.nama, td.jumlah, td.subtotal
     FROM transaksi t
     JOIN transaksi_detail td ON t.id = td.transaksi_id
     JOIN produk p ON td.produk_id = p.id
@@ -40,7 +38,7 @@ router.get("/", (req, res) => {
   db.query(sql, (err, results) => {
     if (err) return res.status(500).json(err);
 
-    // Gabungkan detail transaksi berdasarkan transaksi_id
+    // Kelompokkan transaksi berdasarkan transaksi_id
     const grouped = {};
     results.forEach(row => {
       if (!grouped[row.transaksi_id]) {
@@ -53,13 +51,14 @@ router.get("/", (req, res) => {
       }
       grouped[row.transaksi_id].items.push({
         nama: row.nama,
-        harga: row.harga,
         jumlah: row.jumlah,
+        subtotal: row.subtotal,
       });
     });
 
     res.json(Object.values(grouped));
   });
 });
+
 
 module.exports = router;

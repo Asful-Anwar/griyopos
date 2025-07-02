@@ -40,20 +40,40 @@ class _KasirScreenState extends State<KasirScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.100.228:5000/bayar'), // Ganti jika IP server beda
+        Uri.parse('http://192.168.100.228:5000/bayar'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'order_id': orderId,
-          'total': total,
-        }),
+        body: jsonEncode({'order_id': orderId, 'total': total}),
       );
 
       if (response.statusCode == 200) {
         final snapToken = jsonDecode(response.body)['token'];
+
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => MidtransPage(snapToken: snapToken),
+            builder: (context) => MidtransPage(
+              snapToken: snapToken,
+              onFinish: () async {
+                await simpanTransaksi(total);
+                showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: Text("Pembayaran Berhasil"),
+                    content: Text("Transaksi telah disimpan."),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context)
+                              .popUntil((route) => route.isFirst);
+                          setState(() => keranjang.clear());
+                        },
+                        child: Text("OK"),
+                      )
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
         );
       } else {
@@ -68,12 +88,30 @@ class _KasirScreenState extends State<KasirScreen> {
     }
   }
 
+  Future<void> simpanTransaksi(int total) async {
+    final items = keranjang.entries
+        .map((entry) => {
+              'id': entry.key.id,
+              'jumlah': entry.value,
+              'harga': entry.key.harga,
+            })
+        .toList();
+
+    await http.post(
+      Uri.parse('http://192.168.100.228:5000/transaksi'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'total': total,
+        'items': items,
+      }),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Row(
         children: [
-          // Sidebar
           NavigationRail(
             selectedIndex: 0,
             onDestinationSelected: (index) {},
@@ -93,8 +131,6 @@ class _KasirScreenState extends State<KasirScreen> {
               ),
             ],
           ),
-
-          // Daftar Produk
           Expanded(
             flex: 3,
             child: FutureBuilder<List<Produk>>(
@@ -126,10 +162,13 @@ class _KasirScreenState extends State<KasirScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.fastfood, size: 40, color: Colors.blue),
+                                Icon(Icons.fastfood,
+                                    size: 40, color: Colors.blue),
                                 SizedBox(height: 8),
                                 Text(produk.nama,
-                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold)),
                                 Text("Rp ${produk.harga}"),
                               ],
                             ),
@@ -146,8 +185,6 @@ class _KasirScreenState extends State<KasirScreen> {
               },
             ),
           ),
-
-          // Keranjang
           Expanded(
             flex: 2,
             child: Container(
@@ -156,7 +193,8 @@ class _KasirScreenState extends State<KasirScreen> {
               child: Column(
                 children: [
                   Text('Keranjang',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   Divider(),
                   Expanded(
                     child: ListView(
@@ -164,7 +202,8 @@ class _KasirScreenState extends State<KasirScreen> {
                         return ListTile(
                           title: Text(entry.key.nama),
                           subtitle: Text('x${entry.value}'),
-                          trailing: Text("Rp ${entry.key.harga * entry.value}"),
+                          trailing:
+                              Text("Rp ${entry.key.harga * entry.value}"),
                         );
                       }).toList(),
                     ),
@@ -175,7 +214,8 @@ class _KasirScreenState extends State<KasirScreen> {
                     children: [
                       Text('Total:', style: TextStyle(fontSize: 18)),
                       Text("Rp ${getTotalHarga()}",
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
                     ],
                   ),
                   SizedBox(height: 16),

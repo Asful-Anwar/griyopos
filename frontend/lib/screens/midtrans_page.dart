@@ -3,19 +3,23 @@ import 'package:url_launcher/url_launcher.dart';
 
 class MidtransPage extends StatelessWidget {
   final String snapToken;
+  final VoidCallback onFinish;
 
-  const MidtransPage({Key? key, required this.snapToken}) : super(key: key);
+  const MidtransPage({
+    Key? key,
+    required this.snapToken,
+    required this.onFinish,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final snapUrl = 'https://app.sandbox.midtrans.com/snap/v2/vtweb/$snapToken';
 
-    // Fungsi untuk meluncurkan URL
     Future<void> _launchPayment() async {
       final uri = Uri.parse(snapUrl);
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
-        Navigator.pop(context); // kembali ke halaman sebelumnya setelah dibuka
+        onFinish(); // ⬅️ Panggil callback ketika selesai membuka browser
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Gagal membuka halaman Midtrans')),
@@ -23,14 +27,14 @@ class MidtransPage extends StatelessWidget {
       }
     }
 
-    // Jalankan saat build pertama
+    // Jalankan saat halaman selesai dibangun
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _launchPayment();
     });
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Memproses Pembayaran..."),
+        title: Text("Mengalihkan ke Midtrans"),
         backgroundColor: Colors.orange,
       ),
       body: Center(
@@ -39,7 +43,7 @@ class MidtransPage extends StatelessWidget {
           children: [
             CircularProgressIndicator(),
             SizedBox(height: 16),
-            Text('Mengalihkan ke Midtrans...', style: TextStyle(fontSize: 16)),
+            Text("Mengalihkan ke halaman pembayaran..."),
           ],
         ),
       ),

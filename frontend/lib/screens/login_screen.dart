@@ -21,10 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final res = await http.post(
       Uri.parse('http://localhost:5000/auth/login'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'username': userCtrl.text,
-        'password': passCtrl.text,
-      }),
+      body: json.encode({'username': userCtrl.text, 'password': passCtrl.text}),
     );
 
     print("Status code: ${res.statusCode}");
@@ -50,9 +47,9 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Login gagal")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Login gagal")));
     }
   }
 
@@ -64,9 +61,21 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Image.asset(
+              'assets/images/download-removebg-preview.png',
+              height: 100,
+            ),
+            SizedBox(height: 24),
             Text("Login", style: TextStyle(fontSize: 24)),
-            TextField(controller: userCtrl, decoration: InputDecoration(labelText: "Username")),
-            TextField(controller: passCtrl, decoration: InputDecoration(labelText: "Password"), obscureText: true),
+            TextField(
+              controller: userCtrl,
+              decoration: InputDecoration(labelText: "Username"),
+            ),
+            TextField(
+              controller: passCtrl,
+              decoration: InputDecoration(labelText: "Password"),
+              obscureText: true,
+            ),
             SizedBox(height: 20),
             ElevatedButton(onPressed: login, child: Text("Login")),
           ],
