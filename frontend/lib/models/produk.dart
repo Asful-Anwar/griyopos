@@ -13,10 +13,10 @@ class Produk {
 
   factory Produk.fromJson(Map<String, dynamic> json) {
     return Produk(
-      id: json['id'],
-      nama: json['nama'],
-      harga: json['harga'],
-      stok: json['stok'],
+      id: int.tryParse(json['id'].toString()) ?? 0,
+      nama: json['nama'] ?? '',
+      harga: int.tryParse(json['harga'].toString()) ?? 0,
+      stok: int.tryParse(json['stok'].toString()) ?? 0,
     );
   }
 }

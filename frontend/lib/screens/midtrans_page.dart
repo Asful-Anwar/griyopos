@@ -19,25 +19,24 @@ class MidtransPage extends StatelessWidget {
       final uri = Uri.parse(snapUrl);
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
-        onFinish(); // ⬅️ Panggil callback ketika selesai membuka browser
+        onFinish(); // Simpan transaksi setelah browser dibuka
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal membuka halaman Midtrans')),
+          const SnackBar(content: Text('Gagal membuka halaman Midtrans')),
         );
       }
     }
 
-    // Jalankan saat halaman selesai dibangun
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _launchPayment();
     });
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Mengalihkan ke Midtrans"),
+        title: const Text("Mengalihkan ke Midtrans"),
         backgroundColor: Colors.orange,
       ),
-      body: Center(
+      body: const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

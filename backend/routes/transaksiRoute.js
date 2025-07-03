@@ -2,43 +2,69 @@ const express = require("express");
 const router = express.Router();
 const db = require("../models/db");
 
-router.post("/", (req, res) => {
-  const { order_id, total, items } = req.body;
+// ✅ Endpoint Simpan Transaksi
+router.post('/simpan', (req, res) => {
+  const { order_id, total, keranjang, metode_pembayaran } = req.body;
 
-  if (!order_id || !total || !items || items.length === 0) {
-    return res.status(400).json({ error: 'Data tidak lengkap' });
+  if (!order_id || !total || !Array.isArray(keranjang) || keranjang.length === 0) {
+    return res.status(400).json({ error: "Data tidak lengkap" });
   }
 
-  // Simpan transaksi utama
-  const sqlTransaksi = "INSERT INTO transaksi (id, total, created_at) VALUES (?, ?, NOW())";
-  db.query(sqlTransaksi, [order_id, total], (err, result) => {
-    if (err) return res.status(500).json({ error: 'Gagal menyimpan transaksi', detail: err });
+  const insertTransaksiSQL = `
+    INSERT INTO transaksi (order_id, total, metode_pembayaran)
+    VALUES (?, ?, ?)
+  `;
 
-    // Siapkan data detail transaksi
-    const detailSql = "INSERT INTO transaksi_detail (transaksi_id, produk_id, jumlah, subtotal) VALUES ?";
-    const detailValues = items.map(item => [order_id, item.id, item.jumlah, item.harga * item.jumlah]);
+  db.query(insertTransaksiSQL, [order_id, total, metode_pembayaran], (err, result) => {
+    if (err) {
+      console.error("❌ Error simpan transaksi:", err);
+      return res.status(500).json({ error: "Gagal menyimpan transaksi" });
+    }
 
-    db.query(detailSql, [detailValues], (err2) => {
-      if (err2) return res.status(500).json({ error: 'Gagal menyimpan detail', detail: err2 });
-      res.json({ message: 'Transaksi berhasil disimpan' });
+    const transaksiId = result.insertId;
+
+    // ✅ Simpan detail transaksi (tanpa nama_produk karena kolom tidak ada)
+    const detailSQL = `
+      INSERT INTO transaksi_detail (transaksi_id, produk_id, harga, qty)
+      VALUES ?
+    `;
+
+    const detailValues = keranjang.map(item => [
+      transaksiId,
+      item.id,
+      item.harga,
+      item.qty ?? 1
+    ]);
+
+    db.query(detailSQL, [detailValues], (err2) => {
+      if (err2) {
+        console.error("❌ Error simpan detail:", err2);
+        return res.status(500).json({ error: "Gagal simpan detail transaksi" });
+      }
+
+      res.json({ message: "✅ Transaksi berhasil disimpan" });
     });
   });
 });
 
+
+// ✅ Endpoint GET Riwayat Transaksi
 router.get("/", (req, res) => {
   const sql = `
     SELECT t.id AS transaksi_id, t.total, t.created_at,
-           p.nama, td.jumlah, td.subtotal
+           td.produk_id, td.qty, td.harga
     FROM transaksi t
     JOIN transaksi_detail td ON t.id = td.transaksi_id
-    JOIN produk p ON td.produk_id = p.id
     ORDER BY t.created_at DESC
   `;
 
   db.query(sql, (err, results) => {
-    if (err) return res.status(500).json(err);
+    if (err) {
+      console.error("❌ Error ambil riwayat transaksi:", err);
+      return res.status(500).json(err);
+    }
 
-    // Kelompokkan transaksi berdasarkan transaksi_id
+    // Kelompokkan hasil per transaksi
     const grouped = {};
     results.forEach(row => {
       if (!grouped[row.transaksi_id]) {
@@ -49,16 +75,17 @@ router.get("/", (req, res) => {
           items: [],
         };
       }
+
       grouped[row.transaksi_id].items.push({
-        nama: row.nama,
-        jumlah: row.jumlah,
-        subtotal: row.subtotal,
+        produk_id: row.produk_id,
+        qty: row.qty,
+        harga: row.harga,
+        subtotal: row.qty * row.harga
       });
     });
 
     res.json(Object.values(grouped));
   });
 });
-
 
 module.exports = router;

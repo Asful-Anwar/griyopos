@@ -11,7 +11,7 @@ class _AdminRiwayatScreenState extends State<AdminRiwayatScreen> {
   List transaksi = [];
 
   Future<void> fetchRiwayat() async {
-    final res = await http.get(Uri.parse('http://localhost:5000/transaksi'));
+    final res = await http.get(Uri.parse('http://192.168.1.6:5000/transaksi'));
     if (res.statusCode == 200) {
       setState(() => transaksi = json.decode(res.body));
     }
