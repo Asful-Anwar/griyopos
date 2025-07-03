@@ -1,13 +1,13 @@
+// index.js (ENTRY POINT)
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const produkRoutes = require("./routes/produkRoute");
 const transaksiRoutes = require("./routes/transaksiRoute");
 const bayarRoute = require("./routes/bayarRoutes");
-const authRoutes = require('./routes/authRoutes');
+const authRoutes = require("./routes/authRoutes");
 
-require('dotenv').config();
-// console.log("🔍 ENV CHECK:", process.env.MIDTRANS_SERVER_KEY);
+require("dotenv").config();
 const app = express();
 
 app.use(cors());
