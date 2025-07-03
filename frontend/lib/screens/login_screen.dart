@@ -87,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset("assets/images/no_image.png", width: 100, height: 100),
+              Image.asset("assets/images/download-removebg-preview.png", width: 100, height: 100),
               const SizedBox(height: 16),
               const Text("Griyo POS Login", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 24),

@@ -18,7 +18,12 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: LoginScreen(), // Ganti dengan LoginScreen() jika ingin mulai dari login
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const LoginScreen(),
+        '/transaksi-baru': (context) => const KasirScreen(),
+        '/produk': (context) =>  ProdukPage(),
+      },
     );
   }
 }

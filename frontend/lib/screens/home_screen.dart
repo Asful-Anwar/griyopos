@@ -1,4 +1,4 @@
-// lib/screens/home_screen.dart
+
 
 import 'package:flutter/material.dart';
 import 'produk_page.dart';
@@ -10,6 +10,7 @@ import 'katalog_page.dart';
 import 'transaksi_page.dart';
 import 'transaksi_cepat_page.dart';
 import 'laporan_page.dart';
+import 'kasir_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final String role;
@@ -85,7 +86,7 @@ class HomeScreen extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => TransaksiCepatPage()),
+                  MaterialPageRoute(builder: (_) => const KasirScreen()),
                 );
               },
               child: CircleAvatar(
