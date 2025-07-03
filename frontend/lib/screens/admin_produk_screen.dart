@@ -20,7 +20,7 @@ class _AdminProdukScreenState extends State<AdminProdukScreen> {
   }
 
   Future<void> fetchProduk() async {
-    final res = await http.get(Uri.parse('http://localhost:5000/produk'));
+    final res = await http.get(Uri.parse('http://192.168.1.6:5000/produk'));
     if (res.statusCode == 200) {
       setState(() => produk = json.decode(res.body));
     }
@@ -44,8 +44,8 @@ class _AdminProdukScreenState extends State<AdminProdukScreen> {
     final body = json.encode({"nama": nama, "harga": harga});
 
     final url = editingId == null
-        ? 'http://localhost:5000/produk'
-        : 'http://localhost:5000/produk/$editingId';
+        ? 'http://192.168.1.6:5000/produk'
+        : 'http://192.168.1.6:5000/produk/$editingId';
 
     final res = editingId == null
         ? await http.post(Uri.parse(url), headers: {'Content-Type': 'application/json'}, body: body)
@@ -63,7 +63,7 @@ class _AdminProdukScreenState extends State<AdminProdukScreen> {
   }
 
   Future<void> hapusProduk(int id) async {
-    final res = await http.delete(Uri.parse('http://localhost:5000/produk/$id'));
+    final res = await http.delete(Uri.parse('http://192.168.1.6:5000/produk/$id'));
     if (res.statusCode == 200) {
       fetchProduk();
     }

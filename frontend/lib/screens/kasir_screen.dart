@@ -14,7 +14,7 @@ class KasirScreen extends StatefulWidget {
 
 class _KasirScreenState extends State<KasirScreen> {
   List<Produk> produkList = [];
-  List<Produk> keranjang = [];
+  Map<Produk, int> keranjang = {};
 
   @override
   void initState() {
@@ -31,12 +31,65 @@ class _KasirScreenState extends State<KasirScreen> {
 
   void tambahKeKeranjang(Produk produk) {
     setState(() {
-      keranjang.add(produk);
+      keranjang.update(produk, (value) => value + 1, ifAbsent: () => 1);
+    });
+  }
+
+  void kurangiDariKeranjang(Produk produk) {
+    setState(() {
+      if (keranjang.containsKey(produk)) {
+        if (keranjang[produk]! > 1) {
+          keranjang[produk] = keranjang[produk]! - 1;
+        } else {
+          keranjang.remove(produk);
+        }
+      }
     });
   }
 
   int getTotalHarga() {
-    return keranjang.fold(0, (total, item) => total + item.harga);
+    return keranjang.entries
+        .map((entry) => entry.key.harga * entry.value)
+        .fold(0, (a, b) => a + b);
+  }
+
+  int getTotalQty() {
+    return keranjang.values.fold(0, (a, b) => a + b);
+  }
+
+  Future<void> simpanTransaksi(String orderId, int total) async {
+    final keranjangData = keranjang.entries.map((entry) {
+      return {
+        'id': entry.key.id,
+        'nama': entry.key.nama,
+        'harga': entry.key.harga,
+        'qty': entry.value,
+      };
+    }).toList();
+
+    try {
+      final res = await http.post(
+        Uri.parse('http://192.168.1.6:5000/transaksi/simpan'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'order_id': orderId,
+          'total': total,
+          'metode_pembayaran': 'Midtrans',
+          'keranjang': keranjangData,
+        }),
+      );
+
+      if (res.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Transaksi berhasil disimpan.")),
+        );
+        setState(() => keranjang.clear());
+      } else {
+        throw Exception("Gagal simpan transaksi: ${res.body}");
+      }
+    } catch (e) {
+      print("Error simpan transaksi: $e");
+    }
   }
 
   void bayar() async {
@@ -45,7 +98,7 @@ class _KasirScreenState extends State<KasirScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.100.228:5000/bayar'),
+        Uri.parse('http://192.168.1.6:5000/bayar'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'order_id': orderId, 'total': total}),
       );
@@ -58,12 +111,7 @@ class _KasirScreenState extends State<KasirScreen> {
             builder: (_) => MidtransPage(
               snapToken: snapToken,
               onFinish: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Pembayaran selesai.")),
-                );
-                setState(() {
-                  keranjang.clear();
-                });
+                simpanTransaksi(orderId, total);
               },
             ),
           ),
@@ -86,15 +134,11 @@ class _KasirScreenState extends State<KasirScreen> {
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
         title: const Text("Transaksi Baru"),
-        actions: [
-          IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
-        ],
       ),
       body: Column(
         children: [
-          // Tombol atas
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(8),
             child: Row(
               children: [
                 Expanded(
@@ -125,12 +169,10 @@ class _KasirScreenState extends State<KasirScreen> {
               ],
             ),
           ),
-
-          // Layout Produk dan Struk
           Expanded(
             child: Row(
               children: [
-                // Kiri: Produk
+                // Daftar Produk
                 Expanded(
                   flex: 3,
                   child: Card(
@@ -142,9 +184,18 @@ class _KasirScreenState extends State<KasirScreen> {
                         return ListTile(
                           title: Text(produk.nama),
                           subtitle: Text("Rp${produk.harga}"),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.add_circle, color: Colors.green),
-                            onPressed: () => tambahKeKeranjang(produk),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.remove_circle, color: Colors.red),
+                                onPressed: () => kurangiDariKeranjang(produk),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.add_circle, color: Colors.green),
+                                onPressed: () => tambahKeKeranjang(produk),
+                              ),
+                            ],
                           ),
                         );
                       },
@@ -152,7 +203,7 @@ class _KasirScreenState extends State<KasirScreen> {
                   ),
                 ),
 
-                // Kanan: Struk
+                // Struk
                 Expanded(
                   flex: 2,
                   child: Card(
@@ -162,32 +213,75 @@ class _KasirScreenState extends State<KasirScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            "Struk Belanja",
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          Center(child: Icon(Icons.store, size: 50)),
+                          const Center(
+                            child: Text(
+                              "Karis Jaya Shop",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 18),
+                            ),
                           ),
-                          const Divider(),
+                          const Center(
+                            child: Text(
+                              "Jl. Dr. Ir. H. Soekarno No.19, Medokan Semampir\nSurabaya",
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const Divider(thickness: 1),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: const [Text("2025-07-03"), Text("Karis")],
+                          ),
+                          const Divider(thickness: 1),
                           Expanded(
                             child: ListView.builder(
                               itemCount: keranjang.length,
                               itemBuilder: (context, index) {
-                                final item = keranjang[index];
-                                return ListTile(
-                                  dense: true,
-                                  title: Text(item.nama),
-                                  trailing: Text("Rp${item.harga}"),
+                                final produk = keranjang.keys.elementAt(index);
+                                final qty = keranjang[produk]!;
+                                final total = produk.harga * qty;
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 4.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "${index + 1}. ${produk.nama}",
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Text("$qty x ${produk.harga}"),
+                                      Align(
+                                        alignment: Alignment.centerRight,
+                                        child: Text("Rp $total"),
+                                      ),
+                                    ],
+                                  ),
                                 );
                               },
                             ),
                           ),
-                          const Divider(),
+                          const Divider(thickness: 1),
+                          Text("Total QTY : ${getTotalQty()}"),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text("Total:", style: TextStyle(fontSize: 16)),
+                              const Text("Sub Total"),
+                              Text("Rp ${getTotalHarga()}"),
+                            ],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                "Total",
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
                               Text(
-                                "Rp${getTotalHarga()}",
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                "Rp ${getTotalHarga()}",
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
@@ -200,10 +294,12 @@ class _KasirScreenState extends State<KasirScreen> {
                               label: const Text("Bayar"),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.green,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                               ),
                             ),
-                          )
+                          ),
                         ],
                       ),
                     ),
