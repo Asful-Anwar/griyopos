@@ -1,127 +1,162 @@
+// lib/screens/home_screen.dart
+
 import 'package:flutter/material.dart';
 import 'produk_page.dart';
-import 'transaksi_cepat_page.dart';
-import 'laporan_page.dart';
-import 'transaksi_page.dart';
 import 'pelanggan_page.dart';
 import 'master_page.dart';
 import 'arus_kas_page.dart';
 import 'pengeluaran_page.dart';
 import 'katalog_page.dart';
-import 'login_screen.dart';
+import 'transaksi_page.dart';
+import 'transaksi_cepat_page.dart';
+import 'laporan_page.dart';
 
 class HomeScreen extends StatelessWidget {
   final String role;
-
   const HomeScreen({Key? key, required this.role}) : super(key: key);
 
+  bool get isAdmin => role == 'admin';
+
   void _logout(BuildContext context) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
+    Navigator.pushReplacementNamed(context, '/login');
+  }
+
+  Widget _circleButton(IconData icon, String label, Color color, VoidCallback onTap) {
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          child: CircleAvatar(
+            radius: 30,
+            backgroundColor: color,
+            child: Icon(icon, color: Colors.white),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(fontSize: 12))
+      ],
     );
   }
 
   Widget _squareButton(IconData icon, String label, Color color, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        width: 100,
-        height: 100,
-        margin: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white, size: 32),
-            const SizedBox(height: 8),
-            Text(label, style: const TextStyle(color: Colors.white)),
-          ],
-        ),
+      child: Column(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(8)),
+            child: Icon(icon, color: Colors.white),
+          ),
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(fontSize: 12))
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isAdmin = role == 'admin';
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Griyo POS'),
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.blue[800],
+        actions: const [
+          Icon(Icons.person),
+          SizedBox(width: 8),
+          Icon(Icons.help_outline),
+          SizedBox(width: 8),
+          Icon(Icons.settings),
+          SizedBox(width: 8),
+        ],
       ),
-      body: Center(
-        child: Column(
-          children: [
-            const SizedBox(height: 24),
-            // Tombol keranjang besar (Transaksi)
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => TransaksiPage()));
+      body: Column(
+        children: [
+          const SizedBox(height: 8),
+          ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red[800]),
+            child: const Text('TANPA IKLAN'),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => TransaksiCepatPage()),
+                );
               },
-              icon: const Icon(Icons.shopping_cart, size: 40),
-              label: const Text('Transaksi', style: TextStyle(fontSize: 24)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.red[800],
+                child: const Icon(Icons.add_shopping_cart, color: Colors.white, size: 40),
               ),
             ),
-
-            const SizedBox(height: 24),
-
-            // Tiga tombol utama
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _squareButton(Icons.table_bar, "Produk", Colors.blue, () {
-                  if (isAdmin) {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => ProdukPage()));
-                  }
-                }),
-                _squareButton(Icons.bolt, "Cepat", Colors.orange, () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => TransaksiCepatPage()));
-                }),
-                _squareButton(Icons.insert_chart, "Laporan", Colors.green, () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => LaporanPage()));
-                }),
-              ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _circleButton(Icons.attach_money, "Transaksi", Colors.blue, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TransaksiPage()),
+                );
+              }),
+              _circleButton(Icons.directions_bike, "Cepat", Colors.blue, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => TransaksiCepatPage()),
+                );
+              }),
+              _circleButton(Icons.bar_chart, "Laporan", Colors.blue, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => LaporanPage()),
+                );
+              }),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 16,
+            runSpacing: 16,
+            children: [
+              _squareButton(Icons.table_bar, "Produk", Colors.blue, () {
+                if (isAdmin) Navigator.push(context, MaterialPageRoute(builder: (_) => ProdukPage()));
+              }),
+              _squareButton(Icons.people, "Pelanggan", Colors.red, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const PelangganPage()));
+              }),
+              _squareButton(Icons.apps, "Master", Colors.red, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const MasterPage()));
+              }),
+              _squareButton(Icons.account_balance_wallet, "Arus Kas", Colors.blue, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ArusKasPage()));
+              }),
+              _squareButton(Icons.money_off, "Pengeluaran", Colors.red, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const PengeluaranPage()));
+              }),
+              _squareButton(Icons.grid_view, "Katalog", Colors.red, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const KatalogPage()));
+              }),
+              _squareButton(Icons.settings, "Pengaturan", Colors.blue, () {}),
+              _squareButton(Icons.logout, "Logout", Colors.grey, () => _logout(context)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Expanded(
+            child: Center(
+              child: Text(
+                'No chart data available.',
+                style: TextStyle(color: Colors.orangeAccent),
+              ),
             ),
-
-            const SizedBox(height: 12),
-
-            // Tombol lainnya
-            Wrap(
-              alignment: WrapAlignment.center,
-              children: [
-                _squareButton(Icons.people, "Pelanggan", Colors.red, () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => PelangganPage()));
-                }),
-                _squareButton(Icons.apps, "Master", Colors.red, () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => MasterPage()));
-                }),
-                _squareButton(Icons.account_balance_wallet, "Arus Kas", Colors.blue, () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => ArusKasPage()));
-                }),
-                _squareButton(Icons.money_off, "Pengeluaran", Colors.red, () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => PengeluaranPage()));
-                }),
-                _squareButton(Icons.grid_view, "Katalog", Colors.red, () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => KatalogPage()));
-                }),
-                _squareButton(Icons.settings, "Pengaturan", Colors.blue, () {
-                  // nanti dibuatkan
-                }),
-                _squareButton(Icons.logout, "Logout", Colors.grey, () => _logout(context)),
-              ],
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

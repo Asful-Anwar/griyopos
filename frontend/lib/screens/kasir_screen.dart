@@ -1,233 +1,99 @@
+// lib/screens/kasir_screen.dart
+
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../models/produk.dart';
-import '../services/produk_service.dart';
-import 'midtrans_page.dart';
 
 class KasirScreen extends StatefulWidget {
+  const KasirScreen({Key? key}) : super(key: key);
+
   @override
   _KasirScreenState createState() => _KasirScreenState();
 }
 
 class _KasirScreenState extends State<KasirScreen> {
-  late Future<List<Produk>> futureProduk;
-  Map<Produk, int> keranjang = {};
+  final List<Map<String, dynamic>> produkList = [
+    {"nama": "Produk 1", "harga": 1000},
+    {"nama": "Produk 2", "harga": 2500},
+    {"nama": "Produk 3", "harga": 3500},
+  ];
+
+  List<Map<String, dynamic>> keranjang = [];
+
+  void tambahKeKeranjang(Map<String, dynamic> produk) {
+    setState(() {
+      keranjang.add(produk);
+    });
+  }
+
+  int get totalHarga =>
+      keranjang.fold(0, (sum, item) => sum + (item['harga'] as int));
 
   @override
-  void initState() {
-    super.initState();
-    futureProduk = ProdukService.fetchProduk();
-  }
-
-  void tambahKeKeranjang(Produk produk) {
-    setState(() {
-      keranjang.update(produk, (jumlah) => jumlah + 1, ifAbsent: () => 1);
-    });
-  }
-
-  int getTotalHarga() {
-    int total = 0;
-    keranjang.forEach((produk, jumlah) {
-      total += produk.harga * jumlah;
-    });
-    return total;
-  }
-
-  void bayarDenganMidtrans() async {
-    final total = getTotalHarga();
-    final orderId = DateTime.now().millisecondsSinceEpoch.toString();
-
-    try {
-      final response = await http.post(
-        Uri.parse('http://192.168.100.228:5000/bayar'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'order_id': orderId, 'total': total}),
-      );
-
-      if (response.statusCode == 200) {
-        final snapToken = jsonDecode(response.body)['token'];
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MidtransPage(
-              snapToken: snapToken,
-              onFinish: () async {
-                await simpanTransaksi(total);
-                showDialog(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                    title: Text("Pembayaran Berhasil"),
-                    content: Text("Transaksi telah disimpan."),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context)
-                              .popUntil((route) => route.isFirst);
-                          setState(() => keranjang.clear());
-                        },
-                        child: Text("OK"),
-                      )
-                    ],
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Kasir'),
+      ),
+      body: Row(
+        children: [
+          // Kiri: List Produk
+          Expanded(
+            flex: 2,
+            child: ListView.builder(
+              itemCount: produkList.length,
+              itemBuilder: (context, index) {
+                final produk = produkList[index];
+                return ListTile(
+                  title: Text(produk['nama']),
+                  subtitle: Text('Rp${produk['harga']}'),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.add),
+                    onPressed: () => tambahKeKeranjang(produk),
                   ),
                 );
               },
             ),
           ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memproses pembayaran')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Terjadi kesalahan: $e')),
-      );
-    }
-  }
-
-  Future<void> simpanTransaksi(int total) async {
-    final items = keranjang.entries
-        .map((entry) => {
-              'id': entry.key.id,
-              'jumlah': entry.value,
-              'harga': entry.key.harga,
-            })
-        .toList();
-
-    await http.post(
-      Uri.parse('http://192.168.100.228:5000/transaksi'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'total': total,
-        'items': items,
-      }),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Row(
-        children: [
-          NavigationRail(
-            selectedIndex: 0,
-            onDestinationSelected: (index) {},
-            labelType: NavigationRailLabelType.all,
-            destinations: const [
-              NavigationRailDestination(
-                icon: Icon(Icons.point_of_sale),
-                label: Text('Kasir'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.inventory),
-                label: Text('Produk'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.receipt_long),
-                label: Text('Transaksi'),
-              ),
-            ],
-          ),
+          // Kanan: Struk dan total
           Expanded(
             flex: 3,
-            child: FutureBuilder<List<Produk>>(
-              future: futureProduk,
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  final produkList = snapshot.data!;
-                  return GridView.builder(
-                    padding: EdgeInsets.all(16),
-                    itemCount: produkList.length,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      childAspectRatio: 1.2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
+            child: Container(
+              color: Colors.grey[100],
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Struk Belanja',
+                      style: TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: keranjang.length,
+                      itemBuilder: (context, index) {
+                        final item = keranjang[index];
+                        return ListTile(
+                          title: Text(item['nama']),
+                          trailing: Text('Rp${item['harga']}'),
+                        );
+                      },
                     ),
-                    itemBuilder: (context, index) {
-                      final produk = produkList[index];
-                      return GestureDetector(
-                        onTap: () => tambahKeKeranjang(produk),
-                        child: Card(
-                          color: Colors.white,
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.all(12),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.fastfood,
-                                    size: 40, color: Colors.blue),
-                                SizedBox(height: 8),
-                                Text(produk.nama,
-                                    style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold)),
-                                Text("Rp ${produk.harga}"),
-                              ],
-                            ),
-                          ),
-                        ),
+                  ),
+                  const Divider(),
+                  Text(
+                    'Total: Rp$totalHarga',
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      // nanti: integrasi Midtrans
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Pembayaran belum diintegrasi")),
                       );
                     },
-                  );
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Gagal memuat produk'));
-                } else {
-                  return Center(child: CircularProgressIndicator());
-                }
-              },
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Container(
-              color: Colors.grey.shade100,
-              padding: EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Text('Keranjang',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  Divider(),
-                  Expanded(
-                    child: ListView(
-                      children: keranjang.entries.map((entry) {
-                        return ListTile(
-                          title: Text(entry.key.nama),
-                          subtitle: Text('x${entry.value}'),
-                          trailing:
-                              Text("Rp ${entry.key.harga * entry.value}"),
-                        );
-                      }).toList(),
-                    ),
+                    child: const Text('Bayar Sekarang'),
                   ),
-                  Divider(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Total:', style: TextStyle(fontSize: 18)),
-                      Text("Rp ${getTotalHarga()}",
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: keranjang.isEmpty ? null : bayarDenganMidtrans,
-                    icon: Icon(Icons.payment),
-                    label: Text('Bayar'),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: Size(double.infinity, 50),
-                      backgroundColor: Colors.green,
-                    ),
-                  )
                 ],
               ),
             ),
