@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const { getAllProduk } = require("../controllers/produkController");
 const db = require("../models/db");
 
+// Ambil semua produk
 router.get("/", (req, res) => {
   db.query("SELECT id, nama, harga, stok FROM produk", (err, result) => {
     if (err) return res.status(500).json(err);
@@ -10,12 +10,11 @@ router.get("/", (req, res) => {
   });
 });
 
-
 // Tambah produk
 router.post("/", (req, res) => {
-  const { nama, harga } = req.body;
-  const sql = "INSERT INTO produk (nama, harga) VALUES (?, ?)";
-  db.query(sql, [nama, harga], (err, result) => {
+  const { nama, harga, stok } = req.body;
+  const sql = "INSERT INTO produk (nama, harga, stok) VALUES (?, ?, ?)";
+  db.query(sql, [nama, harga, stok], (err, result) => {
     if (err) return res.status(500).json(err);
     res.json({ message: "Produk ditambahkan", id: result.insertId });
   });
@@ -23,9 +22,9 @@ router.post("/", (req, res) => {
 
 // Edit produk
 router.put("/:id", (req, res) => {
-  const { nama, harga } = req.body;
-  const sql = "UPDATE produk SET nama = ?, harga = ? WHERE id = ?";
-  db.query(sql, [nama, harga, req.params.id], (err) => {
+  const { nama, harga, stok } = req.body;
+  const sql = "UPDATE produk SET nama = ?, harga = ?, stok = ? WHERE id = ?";
+  db.query(sql, [nama, harga, stok, req.params.id], (err) => {
     if (err) return res.status(500).json(err);
     res.json({ message: "Produk diperbarui" });
   });
@@ -39,6 +38,5 @@ router.delete("/:id", (req, res) => {
     res.json({ message: "Produk dihapus" });
   });
 });
-
 
 module.exports = router;

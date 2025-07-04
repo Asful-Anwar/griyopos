@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'produk_page.dart';
 import 'pelanggan_page.dart';
@@ -11,6 +9,7 @@ import 'transaksi_page.dart';
 import 'transaksi_cepat_page.dart';
 import 'laporan_page.dart';
 import 'kasir_screen.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final String role;
@@ -19,7 +18,10 @@ class HomeScreen extends StatelessWidget {
   bool get isAdmin => role == 'admin';
 
   void _logout(BuildContext context) {
-    Navigator.pushReplacementNamed(context, '/login');
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+    );
   }
 
   Widget _circleButton(IconData icon, String label, Color color, VoidCallback onTap) {
@@ -101,22 +103,13 @@ class HomeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _circleButton(Icons.attach_money, "Transaksi", Colors.blue, () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const TransaksiPage()),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const TransaksiPage()));
               }),
               _circleButton(Icons.directions_bike, "Cepat", Colors.blue, () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => TransaksiCepatPage()),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (_) => TransaksiCepatPage()));
               }),
               _circleButton(Icons.bar_chart, "Laporan", Colors.blue, () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => LaporanPage()),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (_) => LaporanPage()));
               }),
             ],
           ),
@@ -126,25 +119,32 @@ class HomeScreen extends StatelessWidget {
             spacing: 16,
             runSpacing: 16,
             children: [
-              _squareButton(Icons.table_bar, "Produk", Colors.blue, () {
-                if (isAdmin) Navigator.push(context, MaterialPageRoute(builder: (_) => ProdukPage()));
-              }),
-              _squareButton(Icons.people, "Pelanggan", Colors.red, () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const PelangganPage()));
-              }),
-              _squareButton(Icons.apps, "Master", Colors.red, () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const MasterPage()));
-              }),
-              _squareButton(Icons.account_balance_wallet, "Arus Kas", Colors.blue, () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const ArusKasPage()));
-              }),
-              _squareButton(Icons.money_off, "Pengeluaran", Colors.red, () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const PengeluaranPage()));
-              }),
-              _squareButton(Icons.grid_view, "Katalog", Colors.red, () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const KatalogPage()));
-              }),
-              _squareButton(Icons.settings, "Pengaturan", Colors.blue, () {}),
+              if (isAdmin)
+                _squareButton(Icons.table_bar, "Produk", Colors.blue, () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => ProdukPage()));
+                }),
+              if (isAdmin)
+                _squareButton(Icons.people, "Pelanggan", Colors.red, () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const PelangganPage()));
+                }),
+              if (isAdmin)
+                _squareButton(Icons.apps, "Master", Colors.red, () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const MasterPage()));
+                }),
+              if (isAdmin)
+                _squareButton(Icons.account_balance_wallet, "Arus Kas", Colors.blue, () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ArusKasPage()));
+                }),
+              if (isAdmin)
+                _squareButton(Icons.money_off, "Pengeluaran", Colors.red, () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const PengeluaranPage()));
+                }),
+              if (isAdmin)
+                _squareButton(Icons.grid_view, "Katalog", Colors.red, () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const KatalogPage()));
+                }),
+              if (isAdmin)
+                _squareButton(Icons.settings, "Pengaturan", Colors.blue, () {}),
               _squareButton(Icons.logout, "Logout", Colors.grey, () => _logout(context)),
             ],
           ),

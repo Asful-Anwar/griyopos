@@ -69,7 +69,7 @@ class _KasirScreenState extends State<KasirScreen> {
 
     try {
       final res = await http.post(
-        Uri.parse('http://192.168.1.6:5000/transaksi/simpan'),
+        Uri.parse('http://192.168.100.228:5000/transaksi/simpan'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'order_id': orderId,
@@ -93,40 +93,65 @@ class _KasirScreenState extends State<KasirScreen> {
   }
 
   void bayar() async {
-    final total = getTotalHarga();
-    final orderId = DateTime.now().millisecondsSinceEpoch.toString();
+  final total = getTotalHarga();
+  final orderId = DateTime.now().millisecondsSinceEpoch.toString();
 
-    try {
-      final response = await http.post(
-        Uri.parse('http://192.168.1.6:5000/bayar'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'order_id': orderId, 'total': total}),
-      );
+  final keranjangData = keranjang.entries.map((entry) {
+    return {
+      'id': entry.key.id,
+      'nama': entry.key.nama,
+      'harga': entry.key.harga,
+      'qty': entry.value,
+    };
+  }).toList();
 
-      if (response.statusCode == 200) {
-        final snapToken = jsonDecode(response.body)['token'];
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => MidtransPage(
-              snapToken: snapToken,
-              onFinish: () {
-                simpanTransaksi(orderId, total);
-              },
-            ),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Gagal mendapatkan token Midtrans")),
-        );
-      }
-    } catch (e) {
+  try {
+    final response = await http.post(
+      Uri.parse('http://192.168.100.228:5000/bayar'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'order_id': orderId,
+        'total': total,
+        'keranjang': keranjangData, // <- ini penting
+      }),
+    );
+
+    final body = jsonDecode(response.body);
+
+    if (response.statusCode == 400) {
+      // Stop dan tampilkan alert
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Terjadi kesalahan: $e")),
+        SnackBar(content: Text(body['message'] ?? "Stok tidak cukup")),
+      );
+      return;
+    }
+
+    if (response.statusCode == 200) {
+      final snapToken = body['token'];
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => MidtransPage(
+            snapToken: snapToken,
+            onFinish: () {
+              simpanTransaksi(orderId, total);
+            },
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Gagal mendapatkan token Midtrans")),
       );
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Terjadi kesalahan: $e")),
+    );
   }
+}
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -216,7 +241,7 @@ class _KasirScreenState extends State<KasirScreen> {
                           Center(child: Icon(Icons.store, size: 50)),
                           const Center(
                             child: Text(
-                              "Karis Jaya Shop",
+                              "Solvara Store",
                               style: TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 18),
                             ),
@@ -263,7 +288,7 @@ class _KasirScreenState extends State<KasirScreen> {
                             ),
                           ),
                           const Divider(thickness: 1),
-                          Text("Total QTY : ${getTotalQty()}"),
+                          Text("Total belanja : ${getTotalQty()}"),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -275,7 +300,7 @@ class _KasirScreenState extends State<KasirScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Text(
-                                "Total",
+                                "Total Bayar",
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                               Text(
